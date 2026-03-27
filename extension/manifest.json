@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Robot Recorder",
+  "version": "1.0",
+  "description": "Record user interactions and generate automated test scripts.",
+  "permissions": ["storage", "activeTab", "scripting", "sidePanel"],
+  "host_permissions": ["<all_urls>"],
+  "icons": {
+    "16": "icon.svg",
+    "48": "icon.svg",
+    "128": "icon.svg"
+  },
+  "action": {
+    "default_icon": "icon.svg",
+    "default_title": "Click to open Robot Recorder"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "all_frames": true
+    }
+  ]
+}

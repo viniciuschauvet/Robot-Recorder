@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Robot Recorder</title>
+  <style>
+    :root {
+      --bg-main: #020617;
+      --bg-container: #0f172a;
+      --bg-button: #1e293b;
+      --bg-button-hover: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #475569;
+      --accent-cyan: #38bdf8;
+      --accent-cyan-glow: rgba(34, 211, 238, 0.4);
+      --accent-rose: #fb7185;
+      --accent-rose-glow: rgba(251, 113, 133, 0.4);
+      --accent-amber: #f59e0b;
+      --accent-amber-glow: rgba(245, 158, 11, 0.4);
+      --accent-emerald: #10b981;
+      --border-color: #1e293b;
+      --preview-bg: #000000;
+    }
+
+    body.light-mode {
+      --bg-main: #f8fafc;
+      --bg-container: #f1f5f9;
+      --bg-button: #e2e8f0;
+      --bg-button-hover: #cbd5e1;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --accent-cyan: #0284c7;
+      --accent-cyan-glow: rgba(2, 132, 199, 0.2);
+      --accent-rose: #e11d48;
+      --accent-rose-glow: rgba(225, 29, 72, 0.2);
+      --accent-emerald: #059669;
+      --accent-amber: #f59e0b;
+      --border-color: #cbd5e1;
+      --preview-bg: #ffffff;
+    }
+
+    body {
+      width: 320px;
+      padding: 20px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      margin: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+    h1 {
+      font-size: 16px;
+      margin: 0;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-cyan);
+    }
+    #themeToggle {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #themeToggle:hover {
+      color: var(--text-primary);
+    }
+    .status-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-container);
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+    .status {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    .status-idle {
+      color: var(--accent-cyan);
+      text-shadow: 0 0 8px var(--accent-cyan-glow);
+    }
+    .status-recording {
+      color: var(--accent-rose);
+      text-shadow: 0 0 8px var(--accent-rose-glow);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    button {
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--bg-button);
+      color: var(--text-secondary);
+    }
+    button:hover:not(:disabled) {
+      background: var(--bg-button-hover);
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    #startBtn {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+    #startBtn:hover:not(:disabled) {
+      background: rgba(14, 165, 233, 0.1);
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
+    }
+    #stopBtn {
+      border-color: var(--accent-rose);
+      color: var(--accent-rose);
+    }
+    #stopBtn:hover:not(:disabled) {
+      background: rgba(225, 29, 72, 0.1);
+      box-shadow: 0 0 15px rgba(225, 29, 72, 0.2);
+    }
+    #copyBtn {
+      border-color: var(--accent-emerald);
+      color: var(--accent-emerald);
+    }
+    #copyBtn:hover:not(:disabled) {
+      background: rgba(16, 185, 129, 0.1);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+    }
+    #inspectBtn {
+      border-color: #a78bfa;
+      color: #a78bfa;
+    }
+    #inspectBtn:hover:not(:disabled) {
+      background: rgba(167, 139, 250, 0.1);
+      box-shadow: 0 0 15px rgba(167, 139, 250, 0.2);
+    }
+    #inspectBtn.active {
+      background: rgba(167, 139, 250, 0.15);
+      border-color: #a78bfa;
+      color: #a78bfa;
+      box-shadow: 0 0 15px rgba(167, 139, 250, 0.3);
+    }
+    .inspector-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 6px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.03);
+    }
+    .inspector-label {
+      color: var(--text-muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      min-width: 60px;
+    }
+    .inspector-value {
+      color: var(--accent-cyan);
+      word-break: break-all;
+      text-align: right;
+      flex: 1;
+    }
+    .inspector-copy {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0 0 0 6px;
+      font-size: 10px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      height: auto;
+      width: auto;
+      min-width: unset;
+    }
+    .inspector-row:hover .inspector-copy {
+      opacity: 1;
+    }
+    .inspector-copy:hover {
+      color: var(--accent-cyan);
+    }
+    #clearBtn {
+      border-color: var(--text-muted);
+      color: var(--text-muted);
+    }
+    #clearBtn:hover:not(:disabled) {
+      background: rgba(71, 85, 105, 0.1);
+      color: var(--text-primary);
+    }
+    button:disabled {
+      opacity: 0.2;
+      cursor: not-allowed;
+      filter: grayscale(1);
+    }
+    #previewContainer {
+      background: var(--preview-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 12px;
+      margin-top: 8px;
+    }
+    .preview-header {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: flex;
+      justify-content: space-between;
+    }
+    #codePreview {
+      color: var(--accent-cyan);
+      font-size: 11px;
+      overflow-x: hidden;
+      max-height: 250px;
+      margin: 0;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .command-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 4px 6px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+    .command-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--border-color);
+    }
+    .command-text {
+      flex: 1;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+    .unstable-warning {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--accent-amber);
+      font-size: 9px;
+      margin-top: 4px;
+      font-weight: bold;
+    }
+    .source-info {
+      font-size: 9px;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 2px solid var(--accent-amber);
+      padding: 4px 8px;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .source-info code {
+      color: var(--accent-cyan);
+    }
+    .fix-suggestion {
+      font-style: italic;
+      color: var(--accent-emerald);
+      margin-top: 2px;
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 28px;
+      height: 16px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-button);
+      transition: .4s;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 10px;
+      width: 10px;
+      left: 2px;
+      bottom: 2px;
+      background-color: var(--text-secondary);
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+    }
+    input:checked + .slider:before {
+      transform: translateX(12px);
+      background-color: #000;
+    }
+    .delete-cmd-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0 4px;
+      font-size: 14px;
+      line-height: 1;
+      opacity: 0;
+      transition: opacity 0.2s, color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 16px;
+      width: 16px;
+      margin-left: 4px;
+    }
+    .command-item:hover .delete-cmd-btn {
+      opacity: 1;
+    }
+    .delete-cmd-btn:hover {
+      color: var(--accent-rose);
+    }
+    .footer {
+      margin-top: 8px;
+      font-size: 9px;
+      color: var(--text-muted);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-main);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-button);
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="icon.svg" width="24" height="24" alt="Logo" style="filter: drop-shadow(0 0 4px var(--accent-cyan-glow));">
+        <h1>ROBOT_RECORDER_V1.0</h1>
+      </div>
+      <button id="themeToggle" title="Toggle Theme">
+        <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+    
+    <div class="status-container">
+      <span id="statusIndicator" class="status status-idle">Ready to Record</span>
+    </div>
+
+    <div class="controls">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label for="frameworkSelect" style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">Framework:</label>
+        <select id="frameworkSelect" style="background: var(--bg-container); color: var(--text-primary); border: 1px solid var(--border-color); padding: 8px; border-radius: 4px; font-family: inherit; font-size: 11px; cursor: pointer; outline: none;">
+          <option value="cypress">Cypress</option>
+          <option value="playwright">Playwright</option>
+          <option value="robot">Robot Framework</option>
+        </select>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button id="startBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+          Start
+        </button>
+        
+        <button id="stopBtn" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"/></svg>
+          Stop
+        </button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button id="pauseBtn" disabled title="Pause/Resume recording">
+          <svg id="pauseIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          <span id="pauseText">Pause</span>
+        </button>
+
+        <button id="assertBtn" disabled title="Toggle Assertion Mode (Click an element to verify its text)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Assert
+        </button>
+
+        <button id="waitBtn" disabled title="Wait for an element to appear (Click an element to wait for it)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Wait
+        </button>
+
+        <button id="clearBtn" title="Clear recorded commands">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+          Clear Session
+        </button>
+      </div>
+      
+      <button id="copyBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Export Script
+      </button>
+    </div>
+
+    <div id="previewContainer" style="display: none;">
+      <div class="preview-header">
+        <span>Live_Output.js</span>
+        <span style="color: #0ea5e9;">[ACTIVE]</span>
+      </div>
+      <div id="codePreview"></div>
+    </div>
+
+    <div id="inspectorContainer" style="display:none; background:var(--bg-container); border:1px solid var(--accent-cyan); border-radius:4px; padding:12px; margin-top:8px;">
+      <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:bold; margin-bottom:8px; display:flex; justify-content:space-between;">
+        <span>Element_Inspector</span>
+        <span id="inspectorStatus" style="color:var(--accent-cyan)">[HOVER]</span>
+      </div>
+      <div id="inspectorContent" style="font-size:11px; display:flex; flex-direction:column; gap:4px;"></div>
+    </div>
+
+    <div class="footer">
+      Protocol: <span id="protocolDisplay">Cypress</span> // Status: Secure
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
